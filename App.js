@@ -11,6 +11,7 @@ import {
   Button,
   SafeAreaView, 
   ScrollView,  
+  Text,
 } from 'react-native';
 
 import {
@@ -27,6 +28,10 @@ class App extends Component {
     this.state = {
       localStream: null,
       remoteStreamsURL: {},
+      videoText: 'Video On',
+      audioText: 'Audio On',
+      isDisconnected: false,
+      disabledDisconnected: false,
     };
 
     this.local_stream = null;
@@ -85,14 +90,46 @@ class App extends Component {
     this.set_video = this.set_video.bind(this);
     this.handleMessage = this.handleMessage.bind(this);
     this.handleOnClose = this.handleOnClose.bind(this);
-    this.debugNow = this.debugNow.bind(this);
+    this.disconnect = this.disconnect.bind(this);
+    this.videoControl = this.videoControl.bind(this);
+    this.audioControl = this.audioControl.bind(this);
   }
 
-  debugNow(e) {
-    console.log(this.state.remoteStreamsURL);
-    console.log(this.pc_ins);
-    console.log(this.current_id);
+  disconnect(e) {
+    if (this.got_sdp) {
+        this.setState({
+          disabledDisconnected: true,
+        });
+        this.connection.send(JSON.stringify({
+            command: "disconnect",
+            current_id: this.current_id
+        }));
+        this.setState({
+          isDisconnected: true,
+        });
+
+        try {
+          this.connection.close()
+          this.read_connection.close()
+          this.connection = null;
+          this.read_connection = null;
+          this.pc_out.close();
+          this.pc_out = null;
+          this.pc_ins = {};
+        } catch(e) {
+          console.log(`An error occurred on disconnect: ${e}`);
+        }
+    }
   }
+
+  videoControl(e) {
+
+  }
+
+  audioControl(e) {
+
+  }
+
 
   set_video_publish(local_description) {
     var that = this;
@@ -134,8 +171,10 @@ class App extends Component {
           break;
           case "disconnected":
               //reconnect if got disconnected
-              that.got_sdp = false;
-              that.create_out();
+              if (!that.state.isDisconnected) {
+                that.got_sdp = false;
+                that.create_out();
+              }
           break;
           case "failed":
           break;
@@ -316,19 +355,30 @@ class App extends Component {
   }
 
   render () {
-    return (
-      <SafeAreaView style={{flex: 1}}>
-        <Button onPress={this.debugNow} title="Debug Now" />
-        <ScrollView contentContainerStyle={{alignItems: 'center'}}>
-          <RTCView streamURL={this.state.localStream} style={{width: 426,height: 240, marginBottom: '2%', marginTop: '2%'}}/>
 
-          {Object.keys(this.state.remoteStreamsURL).map((key)=>(
-                <RTCView key={key} streamURL={this.state.remoteStreamsURL[key]} style={{width: 426,height: 240, marginBottom: '2%', marginTop: '2%'}}/>
-          ))}
-
-        </ScrollView>
-      </SafeAreaView>
-    );
+    if (this.state.isDisconnected) {
+      return (
+        <SafeAreaView style={{flex: 1}}>
+          <Text>Disconnected...</Text>
+        </SafeAreaView>
+      );
+    } else {
+      return (
+        <SafeAreaView style={{flex: 1}}>
+          <Button onPress={this.disconnect} title="Disconnect" disabled={this.state.disabledDisconnected} />
+          <Button onPress={this.videoControl} title={this.state.videoText} />
+          <Button onPress={this.audioControl} title={this.state.audioText} />
+          <ScrollView contentContainerStyle={{alignItems: 'center'}}>
+            <RTCView streamURL={this.state.localStream} style={{width: 426,height: 240, marginBottom: '2%', marginTop: '2%'}}/>
+  
+            {Object.keys(this.state.remoteStreamsURL).map((key)=>(
+                  <RTCView key={key} streamURL={this.state.remoteStreamsURL[key]} style={{width: 426,height: 240, marginBottom: '2%', marginTop: '2%'}}/>
+            ))}
+  
+          </ScrollView>
+        </SafeAreaView>
+      );
+    }
   }
 }
 
