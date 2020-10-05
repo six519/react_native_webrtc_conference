@@ -96,6 +96,7 @@ class App extends Component {
   }
 
   disconnect(e) {
+    var that = this;
     if (this.got_sdp) {
         this.setState({
           disabledDisconnected: true,
@@ -115,6 +116,11 @@ class App extends Component {
           this.read_connection = null;
           this.pc_out.close();
           this.pc_out = null;
+
+          Object.keys(this.pc_ins).forEach((key, index) => {
+            that.pc_ins[key].close();
+          });
+
           this.pc_ins = {};
         } catch(e) {
           console.log(`An error occurred on disconnect: ${e}`);
