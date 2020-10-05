@@ -123,11 +123,39 @@ class App extends Component {
   }
 
   videoControl(e) {
-
+    if (this.got_sdp) {
+        if (this.video_enabled) {
+            this.video_enabled = false;
+            this.local_stream.getVideoTracks()[0].enabled = false;
+            this.setState({
+              videoText: 'Video Off'
+            });
+        } else {
+            this.video_enabled = true;
+            this.local_stream.getVideoTracks()[0].enabled = true;
+            this.setState({
+              videoText: 'Video On'
+            });
+        }
+    }
   }
 
   audioControl(e) {
-
+    if (this.got_sdp) {
+        if (this.audio_enabled) {
+            this.audio_enabled = false;
+            this.local_stream.getAudioTracks()[0].enabled = false;
+            this.setState({
+              audioText: 'Audio Off'
+            });
+        } else {
+            this.audio_enabled = true;
+            this.local_stream.getAudioTracks()[0].enabled = true;
+            this.setState({
+              audioText: 'Audio On'
+            });
+        }
+    }
   }
 
 
@@ -369,7 +397,7 @@ class App extends Component {
           <Button onPress={this.videoControl} title={this.state.videoText} />
           <Button onPress={this.audioControl} title={this.state.audioText} />
           <ScrollView contentContainerStyle={{alignItems: 'center'}}>
-            <RTCView streamURL={this.state.localStream} style={{width: 426,height: 240, marginBottom: '2%', marginTop: '2%'}}/>
+            <RTCView streamURL={this.state.localStream} style={{width: 426,height: 240, marginBottom: '2%', marginTop: '2%'}} />
   
             {Object.keys(this.state.remoteStreamsURL).map((key)=>(
                   <RTCView key={key} streamURL={this.state.remoteStreamsURL[key]} style={{width: 426,height: 240, marginBottom: '2%', marginTop: '2%'}}/>
