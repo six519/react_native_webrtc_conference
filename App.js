@@ -293,7 +293,7 @@ class App extends Component {
                   });
 
                   that.pc_ins[id].onaddstream = function (event) {
-                    let stream_to_save = {};
+                    let stream_to_save = that.state.remoteStreamsURL;
                     stream_to_save[id] = event.stream.toURL();
                     that.setState({
                       remoteStreamsURL: stream_to_save,
