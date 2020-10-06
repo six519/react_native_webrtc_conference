@@ -93,6 +93,15 @@ class App extends Component {
     this.disconnect = this.disconnect.bind(this);
     this.videoControl = this.videoControl.bind(this);
     this.audioControl = this.audioControl.bind(this);
+    this.debugNow = this.debugNow.bind(this);
+  }
+
+  debugNow(e) {
+    console.log(this.state.remoteStreamsURL);
+    console.log('The keys are:');
+    Object.keys(this.pc_ins).forEach((key, index) => {
+      console.log(key);
+    });
   }
 
   disconnect(e) {
@@ -399,6 +408,7 @@ class App extends Component {
     } else {
       return (
         <SafeAreaView style={{flex: 1}}>
+          <Button onPress={this.debugNow} title="Debug" />
           <Button onPress={this.disconnect} title="Disconnect" disabled={this.state.disabledDisconnected} />
           <Button onPress={this.videoControl} title={this.state.videoText} />
           <Button onPress={this.audioControl} title={this.state.audioText} />
