@@ -83,7 +83,7 @@ class App extends Component {
 
     this.pc_out = null;
     this.pc_ins = {};
-    this.reply_check = {};
+    this.pc_backup_streams = {};
 
     this.set_video_publish = this.set_video_publish.bind(this);
     this.create_out = this.create_out.bind(this);
@@ -94,6 +94,28 @@ class App extends Component {
     this.videoControl = this.videoControl.bind(this);
     this.audioControl = this.audioControl.bind(this);
     this.debugNow = this.debugNow.bind(this);
+    this.streamChecker = this.streamChecker.bind(this);
+  }
+
+  streamChecker() {
+    var that = this;
+
+    Object.keys(that.pc_ins).forEach((key, index) => {
+
+      try {
+        if (!that.state.remoteStreamsURL.hasOwnProperty(key)) {
+          let stream_to_save = that.state.remoteStreamsURL;
+          stream_to_save[key] = that.pc_backup_streams[key];
+          that.setState({
+            remoteStreamsURL: stream_to_save,
+          });
+        }
+      } catch(e) {
+        console.log(`An error occurred on streamChecker: ${e}`);
+      }
+    });
+
+    setTimeout(that.streamChecker, 5000);
   }
 
   debugNow(e) {
@@ -304,6 +326,7 @@ class App extends Component {
                   that.pc_ins[id].onaddstream = function (event) {
                     let stream_to_save = that.state.remoteStreamsURL;
                     stream_to_save[id] = event.stream.toURL();
+                    that.pc_backup_streams[id] = event.stream.toURL();
                     that.setState({
                       remoteStreamsURL: stream_to_save,
                     });
@@ -325,6 +348,7 @@ class App extends Component {
           this.setState({
             remoteStreamsURL: videos
           });
+          delete that.pc_backup_streams[data.current_id];
       }catch(e) {
         console.log('Error occurred on disconnect delete remoteStreamsURL...');
         console.log(`An error occurred: ${e}`);
@@ -390,6 +414,7 @@ class App extends Component {
         };
 
         this.create_out();
+        this.streamChecker();
       })
       .catch(err => {
         alert(`An error occurred: ${err}`);
