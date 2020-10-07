@@ -95,6 +95,34 @@ class App extends Component {
     this.audioControl = this.audioControl.bind(this);
     this.debugNow = this.debugNow.bind(this);
     this.streamChecker = this.streamChecker.bind(this);
+    this.createPeer = this.createPeer.bind(this);
+  }
+
+  createPeer(id) {
+    var that = this;
+    that.pc_ins[id] = new RTCPeerConnection(that.connection_config2);
+
+    that.pc_ins[id].onicecandidate = event => {
+        if (event.candidate === null) {
+            that.set_video(id);
+        }
+    };
+
+    that.pc_ins[id].addTransceiver('audio', {'direction': 'sendrecv'});
+    that.pc_ins[id].addTransceiver('video', {'direction': 'sendrecv'});
+
+    that.pc_ins[id].createOffer().then(d => that.pc_ins[id].setLocalDescription(d)).catch(err => {
+        alert(`An error occurred: ${err}`);
+    });
+
+    that.pc_ins[id].onaddstream = function (event) {
+      let stream_to_save = that.state.remoteStreamsURL;
+      stream_to_save[id] = event.stream.toURL();
+      that.pc_backup_streams[id] = event.stream.toURL();
+      that.setState({
+        remoteStreamsURL: stream_to_save,
+      });
+    };
   }
 
   streamChecker() {
@@ -109,6 +137,11 @@ class App extends Component {
           that.setState({
             remoteStreamsURL: stream_to_save,
           });
+        } else {
+          //check if undefined
+          if (!that.state.remoteStreamsURL[key]) {
+            that.createPeer(key);
+          }
         }
       } catch(e) {
         console.log(`An error occurred on streamChecker: ${e}`);
@@ -308,30 +341,7 @@ class App extends Component {
       for (let id of splitted_data) {
           if (id != "" && id != that.current_id) {
               if (!that.pc_ins.hasOwnProperty(id)) {
-                  that.pc_ins[id] = new RTCPeerConnection(that.connection_config2);
-
-                  that.pc_ins[id].onicecandidate = event => {
-                      if (event.candidate === null) {
-                          that.set_video(id);
-                      }
-                  };
-
-                  that.pc_ins[id].addTransceiver('audio', {'direction': 'sendrecv'});
-                  that.pc_ins[id].addTransceiver('video', {'direction': 'sendrecv'});
-
-                  that.pc_ins[id].createOffer().then(d => that.pc_ins[id].setLocalDescription(d)).catch(err => {
-                      alert(`An error occurred: ${err}`);
-                  });
-
-                  that.pc_ins[id].onaddstream = function (event) {
-                    let stream_to_save = that.state.remoteStreamsURL;
-                    stream_to_save[id] = event.stream.toURL();
-                    that.pc_backup_streams[id] = event.stream.toURL();
-                    that.setState({
-                      remoteStreamsURL: stream_to_save,
-                    });
-                  };
-
+                that.createPeer(id);
               }
           }
       }
